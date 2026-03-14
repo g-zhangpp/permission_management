@@ -245,13 +245,46 @@ for menu in all_menus:
 
 ### 4. 权限配置
 
-为新模块创建对应的权限：
+系统会自动生成并同步权限到数据表中，权限码由 **资源:接口的函数名** 组成。
 
-1. **在权限表中添加权限**：
-   - 为设备管理模块创建相关权限，如 `devices:list`、`devices:create`、`devices:update`、`devices:delete` 等
+#### 权限自动生成规则
 
-2. **为角色分配权限**：
-   - 在角色管理界面为需要访问设备管理模块的角色分配对应的权限
+1. **权限码格式**：`{resource}:{function_name}`
+   - `resource`：从URL路径中提取的资源名称
+   - `function_name`：接口函数的名称
+
+2. **示例**：
+   - URL: `/api/devices`，方法: `POST`，函数名: `create_device` → 权限码: `devices:create_device`
+   - URL: `/api/users`，方法: `GET`，函数名: `get_users` → 权限码: `users:get_users`
+
+3. **路由配置要求**：
+   - 每个接口的路由都必须添加 `description` 参数，用于生成权限描述
+   - 示例：`@router.get("/users", response_model=List[User], description="获取用户列表")`
+
+#### 权限同步流程
+
+1. 系统启动时，会自动扫描所有注册的路由
+2. 根据路由路径、HTTP方法和函数名生成权限码
+3. 检查数据库中是否存在该权限，不存在则创建
+4. 权限描述会使用路由的 `description` 参数
+
+#### 手动配置权限（可选）
+
+如果需要手动配置权限，可以在 `config.yaml` 文件的 `init_data.permissions` 部分添加：
+
+```yaml
+permissions:
+  - name: "获取设备列表"
+    code: "devices:get_devices"
+    description: "查看设备列表"
+  - name: "创建设备"
+    code: "devices:create_device"
+    description: "创建新设备"
+```
+
+#### 为角色分配权限
+
+在角色管理界面为需要访问设备管理模块的角色分配对应的权限，系统会自动同步最新的权限列表。
 
 ### 5. 前端配置
 
